@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ยืม-คืนอุปกรณ์วิทยาศาสตร์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<style>
+:root{
+  --bench:#EEF3F4; --paper:#FFFFFF; --ink:#16303D; --muted:#566B79; --line:#D3DEE2;
+  --teal:#0B6E7F; --teal-dark:#08505D; --signal:#F2C230; --alert:#C03A2B; --ok:#23814A;
+  --f-head:'Mitr','Noto Sans Thai',system-ui,sans-serif;
+  --f-body:'Sarabun','Noto Sans Thai',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-padding-top:64px}
+body{margin:0;background:var(--bench);color:var(--ink);font:400 16px/1.6 var(--f-body)}
+h1,h2,h3{font-family:var(--f-head);font-weight:500;line-height:1.3;margin:0}
+h2{font-size:20px}
+h3{font-size:17px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* ---------- buttons & fields ---------- */
+.btn{min-height:44px;padding:0 18px;border:1.5px solid var(--teal);background:var(--teal);color:#fff;border-radius:6px;font-weight:700;cursor:pointer}
+.btn:hover{background:var(--teal-dark);border-color:var(--teal-dark)}
+.btn:disabled{opacity:.55;cursor:wait}
+.btn.ghost{background:transparent;color:var(--teal)}
+.btn.ghost:hover{background:#E1EEF0}
+.btn.danger{background:var(--alert);border-color:var(--alert)}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+input,select,textarea{width:100%;min-height:44px;padding:8px 12px;border:1.5px solid #A9BAC2;border-radius:6px;background:#fff}
+textarea{min-height:76px;resize:vertical}
+input[type=checkbox],input[type=radio]{width:20px;min-height:20px;accent-color:var(--teal)}
+.fld{display:block}
+.fld>span{display:block;font-weight:700;margin-bottom:4px}
+.fld small{display:block;margin-top:4px;color:var(--muted);min-height:1.4em}
+.fld small.ok{color:var(--ok);font-weight:700}
+.fld small.bad{color:var(--alert);font-weight:700}
+.with-btn{display:flex;gap:8px}
+.with-btn .btn{flex:none}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+.formgrid .wide{grid-column:1/-1}
+@media (max-width:640px){.formgrid{grid-template-columns:1fr}}
+
+/* ---------- login ---------- */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px}
+.login-card{width:100%;max-width:520px;background:var(--paper);border:1px solid var(--line);border-top:10px solid var(--teal);border-radius:4px;padding:32px 28px}
+.login h1{font-size:30px;margin-bottom:8px}
+.login p{margin:0 0 20px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:24px 0 0;padding:16px 0 0;border-top:1px solid var(--line);font-size:14px;color:var(--muted);list-style:none}
+.legend li{display:flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:2px;background:var(--c)}
+.notice{margin:16px 0 0;padding:10px 12px;border-left:4px solid var(--alert);background:#FBECEA;font-size:15px}
+.notice.warn{border-color:var(--signal);background:#FFF6D6}
+
+/* ---------- app chrome ---------- */
+.top{background:var(--teal-dark);color:#fff}
+.top-in{max-width:1040px;margin:0 auto;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--f-head);font-size:18px}
+.brand small{display:block;font-family:var(--f-body);font-size:13px;opacity:.8}
+.who{display:flex;align-items:center;gap:10px;font-size:15px}
+.rolechip{padding:1px 10px;border-radius:3px;background:#fff;color:var(--teal-dark);font-weight:700;font-size:13px}
+.top .btn.ghost{color:#fff;border-color:#9CC6CD}
+.top .btn.ghost:hover{background:rgba(255,255,255,.12)}
+.tabs{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs-in{max-width:1040px;margin:0 auto;padding:0 8px;display:flex;gap:4px}
+.tab{flex:none;min-height:48px;padding:0 16px;border:0;border-bottom:4px solid transparent;background:none;font-weight:700;color:var(--muted);cursor:pointer}
+.tab[aria-selected=true]{color:var(--teal-dark);border-bottom-color:var(--teal)}
+.shell{max-width:1040px;margin:0 auto;padding:20px 16px 80px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:20px;margin-bottom:20px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tools input[type=search]{width:240px}
+.tools label{display:flex;align-items:center;gap:6px;font-weight:500}
+.empty{margin:0;padding:18px 4px;color:var(--muted)}
+
+/* ---------- equipment shelf labels ---------- */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}
+.chip{min-height:36px;padding:0 14px;border:1.5px solid var(--c,#5B6B78);border-radius:4px;background:#fff;color:var(--ink);font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.chip i{width:10px;height:10px;border-radius:2px;background:var(--c,#5B6B78)}
+.chip[aria-pressed=true]{background:var(--c,#5B6B78);color:#fff}
+.chip[aria-pressed=true] i{background:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.label{background:var(--paper);border:1px solid var(--line);border-left:10px solid var(--cat);border-radius:3px;padding:14px 16px 14px;display:flex;flex-direction:column;gap:8px}
+.id{align-self:flex-start;border:1.5px solid var(--ink);border-radius:2px;padding:0 7px;font-weight:700;font-size:13px;letter-spacing:.05em}
+.label h3{margin-top:2px}
+.facts{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--muted)}
+.bar{height:6px;border-radius:3px;background:#E3EBEE;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--cat)}
+.avail{display:flex;justify-content:space-between;font-weight:700;font-size:15px}
+.avail.none{color:var(--alert)}
+.hz{display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:700}
+.hz i{width:14px;height:14px;transform:rotate(45deg);border:2px solid var(--ink);background:var(--signal)}
+.hz.high i{background:var(--alert)}
+.badges{display:flex;flex-wrap:wrap;gap:6px}
+.badge{padding:0 8px;border-radius:3px;font-size:13px;font-weight:700;background:#E3EBEE;color:var(--ink)}
+.badge.bad{background:#FBECEA;color:var(--alert)}
+.badge.warn{background:#FFF1BF}
+.badge.ok{background:#E2F3E9;color:var(--ok)}
+.label .act{margin-top:auto;padding-top:6px;color:var(--muted);font-size:14px}
+
+/* ---------- list rows ---------- */
+.row{display:grid;grid-template-columns:minmax(0,2.4fr) minmax(0,1.4fr) auto;gap:8px 16px;align-items:center;padding:12px 4px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .sub{font-size:14px;color:var(--muted)}
+.row .end{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+@media (max-width:640px){.row{grid-template-columns:1fr}.row .end{justify-content:flex-start}}
+.ledger{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:0 28px;margin:0}
+.ledger div{display:flex;justify-content:space-between;align-items:baseline;padding:10px 2px;border-bottom:1px solid var(--line)}
+.ledger dt{color:var(--muted)}
+.ledger dd{margin:0;font-family:var(--f-head);font-size:22px}
+.ledger dd.bad{color:var(--alert)}
+.ledger dd.warn{color:#9A6F00}
+.seg{display:inline-flex;border:1.5px solid var(--teal);border-radius:6px;overflow:hidden}
+.seg button{min-height:40px;padding:0 16px;border:0;background:#fff;color:var(--teal);font-weight:700;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--teal);color:#fff}
+.pick{display:flex;gap:10px;align-items:center;padding:8px 4px;border-top:1px solid var(--line)}
+
+/* ---------- dialogs ---------- */
+dialog{border:0;border-radius:6px;padding:0;width:min(560px,94vw);max-height:92vh;color:var(--ink);background:var(--paper)}
+dialog::backdrop{background:rgba(22,48,61,.55)}
+.dlg{padding:22px;display:grid;gap:14px}
+.dlg-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.dlg-err{margin:0;padding:10px 12px;border-left:4px solid var(--alert);background:#FBECEA}
+.radios{display:grid;gap:8px}
+.radios label{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1.5px solid var(--line);border-radius:6px;cursor:pointer}
+.radios label:has(input:checked){border-color:var(--teal);background:#E8F3F5}
+#scanBox{width:100%;min-height:260px;background:#0f1d24;border-radius:4px;overflow:hidden}
+
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(560px,92vw);padding:12px 18px;border-radius:6px;background:var(--ink);color:#fff;font-weight:500;z-index:50;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+#toast.err{background:var(--alert)}
+
+/* ---------- print stickers ---------- */
+#printArea{display:none}
+.sticker{margin:0;padding:3mm;border:1px dashed #888;text-align:center;break-inside:avoid;font-family:var(--f-body)}
+.sticker svg{width:28mm;height:28mm}
+.sticker b{display:block;font-size:11pt}
+.sticker span{display:block;font-size:9pt;line-height:1.25}
+@media print{
+  body.printing .login,body.printing #app,body.printing #toast{display:none!important}
+  body.printing{background:#fff}
+  body.printing #printArea{display:grid;grid-template-columns:repeat(4,1fr);gap:5mm;padding:8mm}
+}
+</style>
+</head>
+<body>
+
+<noscript>ต้องเปิด JavaScript เพื่อใช้งานระบบนี้</noscript>
+
+<!-- ===== เข้าสู่ระบบ ===== -->
+<section id="login" class="login" hidden>
+  <div class="login-card">
+    <h1>ยืม-คืนอุปกรณ์วิทยาศาสตร์</h1>
+    <p>เข้าสู่ระบบด้วยบัญชี Google ที่ลงทะเบียนไว้กับห้องปฏิบัติการ</p>
+    <div id="gbtn"></div>
+    <div id="loginMsg" class="notice" role="alert" hidden></div>
+    <div id="cfgWarn" class="notice warn" hidden>ยังไม่ได้ตั้งค่า API_URL หรือ GOOGLE_CLIENT_ID ในไฟล์ index.html</div>
+    <ul class="legend" aria-label="สีประจำหมวดวิชา">
+      <li style="--c:#2F6FDE"><i></i>ฟิสิกส์</li>
+      <li style="--c:#D9720F"><i></i>เคมี</li>
+      <li style="--c:#2E9E5B"><i></i>ชีววิทยา</li>
+      <li style="--c:#7A5BD1"><i></i>โลกและอวกาศ</li>
+      <li style="--c:#5B6B78"><i></i>ทั่วไป</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== แอป ===== -->
+<div id="app" hidden>
+  <header class="top"><div class="top-in">
+    <div class="brand">ยืม-คืนอุปกรณ์วิทยาศาสตร์<small id="schoolName"></small></div>
+    <div class="who"><span id="whoName"></span><span id="whoRole" class="rolechip"></span>
+      <button id="btnLogout" class="btn ghost sm" type="button">ออกจากระบบ</button></div>
+  </div></header>
+  <nav class="tabs" aria-label="เมนูหลัก"><div id="nav" class="tabs-in" role="tablist"></div></nav>
+
+  <main class="shell">
+
+    <!-- ยืม-คืน (ครู/ผู้ดูแล) -->
+    <section id="v-desk" hidden>
+      <div class="panel">
+        <div class="panel-head"><h2>บันทึกการยืม</h2></div>
+        <form id="deskForm" class="formgrid">
+          <label class="fld"><span>ผู้ยืม (รหัสนักเรียนหรือรหัสครู)</span>
+            <div class="with-btn"><input id="bUser" list="dlUsers" required autocomplete="off" inputmode="text">
+              <button type="button" class="btn ghost" data-scan="bUser">สแกน QR</button></div>
+            <small id="bUserHint"></small></label>
+          <label class="fld"><span>อุปกรณ์ (รหัสอุปกรณ์)</span>
+            <div class="with-btn"><input id="bEquip" list="dlEquip" required autocomplete="off">
+              <button type="button" class="btn ghost" data-scan="bEquip">สแกน QR</button></div>
+            <small id="bEquipHint"></small></label>
+          <label class="fld"><span>จำนวน</span><input id="bQty" type="number" min="1" step="1" value="1" required></label>
+          <label class="fld"><span>ยืมกี่วัน</span><input id="bDays" type="number" min="1" step="1" value="7"></label>
+          <label class="fld wide"><span>วัตถุประสงค์</span><input id="bPurpose" placeholder="เช่น ทดลองเรื่องแรงเสียดทาน"></label>
+          <div class="wide"><button class="btn" type="submit">บันทึกการยืม</button></div>
+        </form>
+        <datalist id="dlUsers"></datalist><datalist id="dlEquip"></datalist>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>รายการที่ยังไม่คืน</h2>
+          <div class="tools">
+            <input id="activeQ" type="search" placeholder="ค้นหาชื่อ รหัส หรืออุปกรณ์" aria-label="ค้นหารายการที่ยังไม่คืน">
+            <label><input id="onlyOverdue" type="checkbox">เฉพาะเกินกำหนด</label>
+          </div></div>
+        <div id="activeList"></div>
+      </div>
+    </section>
+
+    <!-- อุปกรณ์ -->
+    <section id="v-equip" hidden>
+      <div class="panel-head"><h2>อุปกรณ์ในห้องปฏิบัติการ</h2>
+        <input id="equipQ" type="search" placeholder="ค้นหาชื่อ รหัส หรือที่เก็บ" aria-label="ค้นหาอุปกรณ์" style="max-width:300px"></div>
+      <div id="catChips" class="chips"></div>
+      <div id="equipGrid" class="grid"></div>
+    </section>
+
+    <!-- ของฉัน -->
+    <section id="v-mine" hidden>
+      <div class="panel"><div class="panel-head"><h2>รายการยืมของฉัน</h2></div><div id="mineList"></div></div>
+    </section>
+
+    <!-- แดชบอร์ด -->
+    <section id="v-dash" hidden>
+      <div class="panel"><div class="panel-head"><h2>ภาพรวม</h2><button id="btnDashRefresh" class="btn ghost sm" type="button">รีเฟรช</button></div>
+        <dl id="ledger" class="ledger"></dl></div>
+      <div id="dashLists"></div>
+    </section>
+
+    <!-- จัดการ (admin) -->
+    <section id="v-admin" hidden>
+      <div class="panel">
+        <div class="panel-head">
+          <div id="adminSeg" class="seg" role="group" aria-label="หมวดการจัดการ">
+            <button type="button" data-seg="equip" aria-pressed="true">อุปกรณ์</button>
+            <button type="button" data-seg="users" aria-pressed="false">ผู้ใช้</button>
+            <button type="button" data-seg="print" aria-pressed="false">พิมพ์ QR</button>
+          </div>
+        </div>
+        <div id="adminBody"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="printArea" aria-hidden="true"></div>
+<dialog id="dlg"></dialog>
+<dialog id="dlgScan"><div class="dlg"><h2>สแกน QR Code</h2><div id="scanBox"></div>
+  <div class="dlg-actions"><button id="scanCancel" type="button" class="btn ghost">ปิดกล้อง</button></div></div></dialog>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+/* ===================== ตั้งค่า ===================== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbwMy64nt9ntqiMGrVzqdJnby4WS8lXeDOekDVV97I3jBTcYcA3m0_TxsNIx7w6mIXYH/exec';
+const GOOGLE_CLIENT_ID = 'PASTE_YOUR_CLIENT_ID.apps.googleusercontent.com';
+
+/* ===================== ตัวช่วย ===================== */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = s => s ? new Date(s + 'T00:00:00').toLocaleDateString('th-TH', {day:'numeric', month:'short', year:'numeric'}) : '-';
+const CAT_COLOR = {'ฟิสิกส์':'#2F6FDE','เคมี':'#D9720F','ชีววิทยา':'#2E9E5B','โลกและอวกาศ':'#7A5BD1','ทั่วไป':'#5B6B78'};
+const catColor = c => CAT_COLOR[c] || '#5B6B78';
+const opts = (arr, sel = '') => (arr || []).map(v => `<option ${v === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
+const field = (label, inner, cls = '') => `<label class="fld ${cls}"><span>${label}</span>${inner}</label>`;
+
+const S = {token:null, me:null, lists:{}, cfg:{}, equipment:[], users:[], active:[], mine:[], dash:null,
+           tab:'', adminTab:'equip', cat:'', q:''};
+const isStaff = () => S.me && (S.me.role === 'teacher' || S.me.role === 'admin');
+const ROLE_TH = {admin:'ผู้ดูแล', teacher:'ครู', student:'นักเรียน'};
+
+let toastTimer;
+function toast(msg, kind = '') {
+  const t = $('#toast');
+  t.textContent = msg; t.className = kind; t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.hidden = true, kind === 'err' ? 6000 : 3500);
+}
+
+async function api(action, params = {}) {
+  let res;
+  try {
+    res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},   // ไม่ให้เกิด preflight
+      body: JSON.stringify({action, token: S.token, params})
+    });
+  } catch (e) {
+    throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตและ API_URL');
+  }
+  let j;
+  try { j = await res.json(); } catch (e) { throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง ตรวจสอบการ Deploy ของ Apps Script'); }
+  if (!j.ok) {
+    const err = new Error(j.error.message); err.code = j.error.code;
+    if (err.code === 'UNAUTHENTICATED' && S.me) logout('หมดเวลาเข้าสู่ระบบ กรุณาเข้าสู่ระบบอีกครั้ง');
+    throw err;
+  }
+  return j.data;
+}
+
+/* ===================== เข้าสู่ระบบ ===================== */
+let gInit = false;
+function waitForGoogle(ms = 10000) {
+  return new Promise((ok, no) => {
+    const t0 = Date.now();
+    (function poll() {
+      if (window.google && google.accounts && google.accounts.id) return ok();
+      if (Date.now() - t0 > ms) return no(new Error('โหลด Google Sign-In ไม่สำเร็จ'));
+      setTimeout(poll, 100);
+    })();
+  });
+}
+
+async function showLogin(msg) {
+  $('#app').hidden = true; $('#login').hidden = false;
+  const m = $('#loginMsg');
+  m.hidden = !msg; m.textContent = msg || '';
+  $('#cfgWarn').hidden = !(API_URL.includes('PASTE') || GOOGLE_CLIENT_ID.includes('PASTE'));
+  try {
+    await waitForGoogle();
+    if (!gInit) {
+      google.accounts.id.initialize({client_id: GOOGLE_CLIENT_ID, callback: onCredential, auto_select: false});
+      google.accounts.id.renderButton($('#gbtn'), {theme:'outline', size:'large', text:'signin_with', locale:'th', width:300});
+      gInit = true;
+    }
+  } catch (e) { m.hidden = false; m.textContent = e.message; }
+}
+
+async function onCredential(resp) {
+  S.token = resp.credential;
+  sessionStorage.setItem('tok', S.token);
+  $('#loginMsg').hidden = true;
+  await boot(false);
+}
+
+function logout(msg) {
+  try { google.accounts.id.disableAutoSelect(); } catch (e) {}
+  sessionStorage.removeItem('tok');
+  Object.assign(S, {token:null, me:null, equipment:[], users:[], active:[], mine:[], dash:null, tab:''});
+  showLogin(msg);
+}
+
+async function boot(silent) {
+  try {
+    S.me = await api('me');
+    const b = await api('bootstrap');
+    S.lists = b.lists; S.cfg = b.settings;
+    enterApp();
+    return true;
+  } catch (e) {
+    S.me = null; S.token = null; sessionStorage.removeItem('tok');
+    showLogin(silent && e.code === 'UNAUTHENTICATED' ? '' : e.message);
+    return false;
+  }
+}
+
+function enterApp() {
+  $('#login').hidden = true; $('#app').hidden = false;
+  $('#schoolName').textContent = S.cfg.school_name || '';
+  $('#whoName').textContent = S.me.full_name;
+  $('#whoRole').textContent = ROLE_TH[S.me.role] || S.me.role;
+  $('#bDays').value = S.cfg.default_loan_days || 7;
+  $('#bDays').max = S.cfg.max_loan_days || 14;
+
+  const tabs = S.me.role === 'student'
+    ? [['equip','อุปกรณ์'], ['mine','รายการของฉัน']]
+    : [['desk','ยืม-คืน'], ['equip','อุปกรณ์'], ['dash','แดชบอร์ด']].concat(S.me.role === 'admin' ? [['admin','จัดการ']] : []);
+  $('#nav').innerHTML = tabs.map(([id, label]) =>
+    `<button class="tab" role="tab" data-tab="${id}" aria-selected="false">${label}</button>`).join('');
+  showTab(tabs[0][0]);
+  loadEquipment();
+  if (isStaff()) loadUsers();
+}
+
+/* ===================== แท็บ ===================== */
+const VIEWS = ['desk','equip','mine','dash','admin'];
+function showTab(id) {
+  S.tab = id;
+  VIEWS.forEach(v => $('#v-' + v).hidden = v !== id);
+  $$('#nav .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === id)));
+  const load = {desk: loadActive, equip: loadEquipment, mine: loadMine, dash: loadDash, admin: loadAdmin}[id];
+  if (load) load();
+  window.scrollTo({top:0});
+}
+
+/* ===================== โหลดข้อมูล ===================== */
+async function loadEquipment() {
+  try { S.equipment = await api('listEquipment'); } catch (e) { return toast(e.message, 'err'); }
+  renderChips(); renderEquip(); fillDatalists();
+  if (S.tab === 'admin') renderAdmin();
+}
+async function loadUsers() {
+  try { S.users = await api('listUsers'); } catch (e) { return toast(e.message, 'err'); }
+  fillDatalists();
+  if (S.tab === 'admin') renderAdmin();
+}
+async function loadActive() {
+  $('#activeList').innerHTML = '<p class="empty">กำลังโหลด...</p>';
+  try { S.active = await api('listLoans', {scope:'active'}); } catch (e) { return toast(e.message, 'err'); }
+  renderActive();
+}
+async function loadMine() {
+  $('#mineList').innerHTML = '<p class="empty">กำลังโหลด...</p>';
+  try { S.mine = await api('listLoans', {scope:'mine'}); } catch (e) { return toast(e.message, 'err'); }
+  renderMine();
+}
+async function loadDash() {
+  try { S.dash = await api('dashboard'); } catch (e) { return toast(e.message, 'err'); }
+  renderDash();
+}
+async function loadAdmin() {
+  await Promise.all([loadEquipment(), loadUsers()]);
+  renderAdmin();
+}
+
+function fillDatalists() {
+  $('#dlUsers').innerHTML = S.users.filter(u => u.status !== 'ระงับ')
+    .map(u => `<option value="${esc(u.user_id)}">${esc(u.full_name)} ${esc(u.class_room || '')}</option>`).join('');
+  $('#dlEquip').innerHTML = S.equipment.map(e => `<option value="${esc(e.equipment_id)}">${esc(e.name)}</option>`).join('');
+}
+
+/* ===================== อุปกรณ์ ===================== */
+function renderChips() {
+  const cats = S.lists.category || [];
+  $('#catChips').innerHTML =
+    `<button class="chip" data-cat="" aria-pressed="${S.cat === ''}">ทั้งหมด</button>` +
+    cats.map(c => `<button class="chip" style="--c:${catColor(c)}" data-cat="${esc(c)}" aria-pressed="${S.cat === c}"><i></i>${esc(c)}</button>`).join('');
+}
+
+function equipCard(e) {
+  const total = Number(e.total_qty) || 0, avail = Number(e.available_qty) || 0;
+  const pct = total ? Math.round(avail / total * 100) : 0;
+  const hz = e.hazard_level === 'อันตราย' ? '<span class="hz high"><i></i>อันตราย</span>'
+           : e.hazard_level === 'ระวัง' ? '<span class="hz"><i></i>ระวัง</span>' : '';
+  const badges = [
+    e.expired ? '<span class="badge bad">หมดอายุแล้ว</span>' : '',
+    e.condition_status !== 'พร้อมใช้' ? `<span class="badge bad">${esc(e.condition_status)}</span>` : '',
+    e.requires_teacher === true ? '<span class="badge warn">ต้องมีครูกำกับ</span>' : '',
+    e.equip_type === 'สิ้นเปลือง' ? '<span class="badge">วัสดุสิ้นเปลือง</span>' : ''
+  ].join('');
+  const usable = avail > 0 && e.condition_status === 'พร้อมใช้' && !e.expired;
+  let act = '';
+  if (isStaff()) {
+    act = usable ? `<button class="btn sm" data-act="toDesk" data-id="${esc(e.equipment_id)}">ยืมให้ผู้ใช้</button>` : '';
+  } else if (e.requires_teacher === true || e.hazard_level === 'อันตราย') {
+    act = '<span class="act">ต้องให้ครูทำรายการให้</span>';
+  } else if (usable) {
+    act = `<button class="btn sm" data-act="selfBorrow" data-id="${esc(e.equipment_id)}">ยืม</button>`;
+  }
+  return `<article class="label" style="--cat:${catColor(e.category)}">
+    <span class="id">${esc(e.equipment_id)}</span>
+    <h3>${esc(e.name)}</h3>
+    <div class="facts"><span>หมวด${esc(e.category)}</span>${e.location ? `<span>เก็บที่ ${esc(e.location)}</span>` : ''}</div>
+    <div class="avail ${avail ? '' : 'none'}"><span>${avail ? 'ว่าง ' + avail + ' จาก ' + total : 'หมดชั่วคราว'} ${esc(e.unit || '')}</span></div>
+    <div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div>
+    ${hz}${badges ? `<div class="badges">${badges}</div>` : ''}
+    ${act}
+  </article>`;
+}
+
+function renderEquip() {
+  const q = S.q.trim().toLowerCase();
+  const list = S.equipment.filter(e =>
+    (!S.cat || e.category === S.cat) &&
+    (!q || `${e.name} ${e.equipment_id} ${e.location}`.toLowerCase().includes(q)));
+  $('#equipGrid').innerHTML = list.length ? list.map(equipCard).join('')
+    : '<p class="empty">ไม่พบอุปกรณ์ที่ตรงกัน ลองล้างตัวกรองหรือค้นด้วยรหัสอุปกรณ์</p>';
+}
+
+/* ===================== ยืม-คืน (ครู/ผู้ดูแล) ===================== */
+function hintUser() {
+  const id = $('#bUser').value.trim(), el = $('#bUserHint');
+  if (!id) { el.textContent = ''; el.className = ''; return; }
+  const u = S.users.find(x => x.user_id === id);
+  el.textContent = u ? `${u.full_name}${u.class_room ? ' ชั้น ' + u.class_room : ''}` : 'ไม่พบรหัสนี้';
+  el.className = u ? 'ok' : 'bad';
+}
+function hintEquip() {
+  const id = $('#bEquip').value.trim(), el = $('#bEquipHint');
+  if (!id) { el.textContent = ''; el.className = ''; return; }
+  const e = S.equipment.find(x => x.equipment_id === id);
+  if (!e) { el.textContent = 'ไม่พบรหัสนี้'; el.className = 'bad'; return; }
+  el.textContent = `${e.name} ว่าง ${e.available_qty} ${e.unit || ''}` +
+    (e.equip_type === 'สิ้นเปลือง' ? ' (เบิกแล้วตัดสต็อกทันที)' : '');
+  el.className = Number(e.available_qty) > 0 ? 'ok' : 'bad';
+}
+
+function renderActive() {
+  const q = $('#activeQ').value.trim().toLowerCase();
+  const only = $('#onlyOverdue').checked;
+  const rows = S.active.filter(l => (!only || l.is_overdue) &&
+    (!q || `${l.user_name} ${l.user_id} ${l.equipment_name} ${l.equipment_id}`.toLowerCase().includes(q)));
+  $('#activeList').innerHTML = rows.length ? rows.map(l => `
+    <div class="row">
+      <div><strong>${esc(l.equipment_name)}</strong> <span class="sub">จำนวน ${esc(l.qty)} ${esc(l.unit)}</span>
+        <div class="sub">${esc(l.user_name)}${l.class_room ? ' ชั้น ' + esc(l.class_room) : ''} (${esc(l.user_id)})</div></div>
+      <div>กำหนดคืน ${esc(fmtDate(l.due_date))}
+        ${l.is_overdue ? `<div class="badges"><span class="badge bad">เกินกำหนด ${l.days_overdue} วัน</span></div>` : ''}</div>
+      <div class="end"><button class="btn sm" data-act="return" data-id="${esc(l.loan_id)}">รับคืน</button></div>
+    </div>`).join('')
+    : `<p class="empty">${S.active.length ? 'ไม่พบรายการที่ตรงกับตัวกรอง' : 'ไม่มีรายการค้างคืน'}</p>`;
+}
+
+function returnDialog(loanId) {
+  const l = S.active.find(x => x.loan_id === loanId);
+  if (!l) return;
+  openDlg({
+    title: 'รับคืนอุปกรณ์',
+    submit: 'บันทึกการคืน',
+    body: `<p style="margin:0"><strong>${esc(l.equipment_name)}</strong> จำนวน ${esc(l.qty)} ${esc(l.unit)}<br>
+      ผู้ยืม: ${esc(l.user_name)}${l.is_overdue ? ` (เกินกำหนด ${l.days_overdue} วัน)` : ''}</p>
+      <div class="radios" role="radiogroup" aria-label="สภาพตอนคืน">
+        <label><input type="radio" name="cond" value="ปกติ" checked>สภาพปกติ</label>
+        <label><input type="radio" name="cond" value="ชำรุด">ชำรุด (สร้างใบแจ้งซ่อมให้อัตโนมัติ)</label>
+        <label><input type="radio" name="cond" value="สูญหาย">สูญหาย (ตัดออกจากจำนวนทั้งหมด)</label>
+      </div>
+      ${field('หมายเหตุ', '<textarea name="note" placeholder="ไม่บังคับ"></textarea>')}`,
+    onSubmit: async f => {
+      const r = await api('returnLoan', {loan_id: loanId, condition: f.elements.cond.value, note: f.elements.note.value});
+      toast(r.ticket_id ? `รับคืนแล้ว และเปิดใบแจ้งซ่อม ${r.ticket_id}` : 'รับคืนแล้ว');
+      loadActive(); loadEquipment();
+    }
+  });
+}
+
+/* ===================== ของฉัน ===================== */
+function renderMine() {
+  const cls = {'ยืมอยู่':'', 'เกินกำหนด':'bad', 'คืนแล้ว':'ok', 'สูญหาย':'warn'};
+  $('#mineList').innerHTML = S.mine.length ? S.mine.map(l => `
+    <div class="row">
+      <div><strong>${esc(l.equipment_name)}</strong> <span class="sub">จำนวน ${esc(l.qty)} ${esc(l.unit)}</span>
+        <div class="sub">ยืมเมื่อ ${esc(fmtDate(l.borrow_date))}</div></div>
+      <div>${l.is_active ? 'กำหนดคืน ' + esc(fmtDate(l.due_date)) : 'คืนเมื่อ ' + esc(fmtDate(l.return_date))}</div>
+      <div class="end"><span class="badge ${cls[l.status] || ''}">${esc(l.status)}${l.is_overdue ? ' ' + l.days_overdue + ' วัน' : ''}</span></div>
+    </div>`).join('')
+    : '<p class="empty">ยังไม่มีรายการยืม ไปที่แท็บอุปกรณ์เพื่อเริ่มยืม</p>';
+}
+
+function selfBorrowDialog(id) {
+  const e = S.equipment.find(x => x.equipment_id === id);
+  if (!e) return;
+  openDlg({
+    title: 'ยืม ' + e.name,
+    submit: 'ยืมอุปกรณ์',
+    body: `<p style="margin:0" class="sub">ว่าง ${esc(e.available_qty)} ${esc(e.unit || '')}${e.equip_type === 'สิ้นเปลือง' ? ' (วัสดุสิ้นเปลือง เบิกแล้วไม่ต้องคืน)' : ''}</p>
+      <div class="formgrid">
+        ${field('จำนวน', `<input name="qty" type="number" min="1" max="${esc(e.available_qty)}" value="1" required>`)}
+        ${e.equip_type === 'สิ้นเปลือง' ? '' : field('ยืมกี่วัน', `<input name="days" type="number" min="1" max="${S.cfg.max_loan_days || 14}" value="${S.cfg.default_loan_days || 7}">`)}
+        ${field('วัตถุประสงค์', '<input name="purpose" placeholder="เช่น ทำรายงานการทดลอง">', 'wide')}
+      </div>`,
+    onSubmit: async f => {
+      const x = f.elements;
+      const r = await api('borrow', {equipment_id: id, qty: +x.qty.value, days: x.days ? +x.days.value : 0, purpose: x.purpose.value});
+      toast(r.consumable ? 'เบิกวัสดุแล้ว' : `ยืมสำเร็จ คืนภายใน ${fmtDate(r.due_date)}`);
+      loadEquipment();
+    }
+  });
+}
+
+/* ===================== แดชบอร์ด ===================== */
+function renderDash() {
+  const c = S.dash.counts;
+  const items = [
+    ['รายการอุปกรณ์', c.equipmentItems, ''], ['จำนวนชิ้นทั้งหมด', c.totalUnits, ''],
+    ['กำลังถูกยืม', c.activeLoans, ''], ['เกินกำหนดคืน', c.overdue, c.overdue ? 'bad' : ''],
+    ['รอซ่อม', c.openMaintenance, c.openMaintenance ? 'warn' : ''],
+    ['ใกล้หมดอายุหรือหมดอายุ', c.expiring, c.expiring ? 'warn' : ''],
+    ['ใกล้ครบกำหนดตรวจเช็ก', c.checkDue, c.checkDue ? 'warn' : '']];
+  $('#ledger').innerHTML = items.map(([k, v, cls]) => `<div><dt>${k}</dt><dd class="${cls}">${v}</dd></div>`).join('');
+
+  const panel = (title, rows) => `<div class="panel"><div class="panel-head"><h2>${title}</h2></div>${rows || '<p class="empty">ไม่มีรายการ</p>'}</div>`;
+  const dRow = (r, label) => `<div class="row"><div><strong>${esc(r.name)}</strong> <span class="sub">${esc(r.equipment_id)}</span></div>
+    <div>${esc(fmtDate(r.date))}</div><div class="end"><span class="badge ${r.expired ? 'bad' : 'warn'}">${r.expired ? 'เลยกำหนด' : label}</span></div></div>`;
+  const d = S.dash;
+  $('#dashLists').innerHTML =
+    panel('เกินกำหนดคืน', d.overdue.length ? d.overdue.map(l => `<div class="row"><div><strong>${esc(l.equipment_name)}</strong> <span class="sub">จำนวน ${esc(l.qty)}</span>
+      <div class="sub">${esc(l.user_name)}${l.class_room ? ' ชั้น ' + esc(l.class_room) : ''}</div></div>
+      <div>กำหนดคืน ${esc(fmtDate(l.due_date))}</div><div class="end"><span class="badge bad">เกิน ${l.days_overdue} วัน</span></div></div>`).join('') : '') +
+    panel('สารเคมีและวัสดุใกล้หมดอายุ', d.expiring.map(r => dRow(r, 'ใกล้หมดอายุ')).join('')) +
+    panel('อุปกรณ์ที่ต้องตรวจเช็กหรือสอบเทียบ', d.checkDue.map(r => dRow(r, 'ใกล้ครบกำหนด')).join('')) +
+    panel('ใบแจ้งซ่อมที่ยังไม่เสร็จ', d.maintenance.map(m => `<div class="row"><div><strong>${esc(m.name)}</strong>
+      <div class="sub">${esc(m.issue)}</div></div><div>${esc(m.ticket_id)}</div><div class="end"><span class="badge warn">${esc(m.status)}</span></div></div>`).join(''));
+}
+
+/* ===================== จัดการ (admin) ===================== */
+function renderAdmin() {
+  $$('#adminSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.seg === S.adminTab)));
+  const body = $('#adminBody');
+  if (S.adminTab === 'equip') {
+    body.innerHTML = `<div class="panel-head"><h2>อุปกรณ์ทั้งหมด (${S.equipment.length})</h2>
+      <button class="btn" data-act="addEquip">เพิ่มอุปกรณ์</button></div>` +
+      (S.equipment.map(e => `<div class="row"><div><span class="id">${esc(e.equipment_id)}</span> <strong>${esc(e.name)}</strong>
+        <div class="sub">หมวด${esc(e.category)} สภาพ${esc(e.condition_status)}</div></div>
+        <div>ทั้งหมด ${esc(e.total_qty)} ว่าง ${esc(e.available_qty)} ${esc(e.unit || '')}</div>
+        <div class="end"><button class="btn ghost sm" data-act="editEquip" data-id="${esc(e.equipment_id)}">แก้ไข</button></div></div>`).join('')
+        || '<p class="empty">ยังไม่มีอุปกรณ์ กดเพิ่มอุปกรณ์เพื่อเริ่มต้น</p>');
+  } else if (S.adminTab === 'users') {
+    body.innerHTML = `<div class="panel-head"><h2>ผู้ใช้ทั้งหมด (${S.users.length})</h2>
+      <button class="btn" data-act="addUser">เพิ่มผู้ใช้</button></div>` +
+      (S.users.map(u => `<div class="row"><div><strong>${esc(u.full_name)}</strong> <span class="sub">${esc(u.user_id)}</span>
+        <div class="sub">${esc(u.email || '')}</div></div>
+        <div>${esc(ROLE_TH[u.role] || u.role)}${u.class_room ? ' ชั้น ' + esc(u.class_room) : ''}
+          ${u.status === 'ระงับ' ? '<div class="badges"><span class="badge bad">ระงับ</span></div>' : ''}</div>
+        <div class="end"><button class="btn ghost sm" data-act="editUser" data-id="${esc(u.user_id)}">แก้ไข</button></div></div>`).join('')
+        || '<p class="empty">ยังไม่มีผู้ใช้</p>');
+  } else {
+    body.innerHTML = `<div class="panel-head"><h2>พิมพ์สติกเกอร์ QR</h2>
+      <div class="tools"><button class="btn ghost sm" data-act="pickAll">เลือกทั้งหมด</button>
+      <button class="btn" data-act="printLabels">พิมพ์ที่เลือก</button></div></div>
+      <p class="sub" style="margin-top:0">QR แต่ละดวงเก็บรหัสอุปกรณ์ ใช้สแกนในหน้า ยืม-คืน</p>` +
+      (S.equipment.map(e => `<label class="pick"><input type="checkbox" value="${esc(e.equipment_id)}">
+        <span class="id">${esc(e.equipment_id)}</span> ${esc(e.name)}</label>`).join('') || '<p class="empty">ยังไม่มีอุปกรณ์</p>');
+  }
+}
+
+function equipDialog(id) {
+  const L = S.lists;
+  const isNew = !id;
+  const e = isNew ? {category: (L.category || [])[0], equip_type:'ถาวร', condition_status:'พร้อมใช้', hazard_level:'ปกติ', total_qty:1}
+                  : S.equipment.find(x => x.equipment_id === id);
+  openDlg({
+    title: isNew ? 'เพิ่มอุปกรณ์' : 'แก้ไข ' + e.equipment_id,
+    body: `<div class="formgrid">
+      ${field('ชื่ออุปกรณ์', `<input name="name" value="${esc(e.name || '')}" required>`, 'wide')}
+      ${field('หมวด', `<select name="category">${opts(L.category, e.category)}</select>`)}
+      ${field('ประเภท', `<select name="equip_type">${opts(L.equip_type, e.equip_type)}</select>`)}
+      ${field('จำนวนทั้งหมด', `<input name="total_qty" type="number" min="0" step="1" value="${esc(e.total_qty)}" required>`)}
+      ${field('หน่วยนับ', `<input name="unit" value="${esc(e.unit || '')}" placeholder="ชิ้น อัน ชุด">`)}
+      ${field('ที่เก็บ', `<input name="location" value="${esc(e.location || '')}" placeholder="ตู้ A ชั้น 2">`, 'wide')}
+      ${field('สภาพ', `<select name="condition_status">${opts(L.condition_status, e.condition_status)}</select>`)}
+      ${field('ระดับอันตราย', `<select name="hazard_level">${opts(L.hazard_level, e.hazard_level)}</select>`)}
+      ${field('วันหมดอายุ', `<input name="expiry_date" type="date" value="${esc(e.expiry_date || '')}">`)}
+      ${field('ตรวจเช็กครั้งถัดไป', `<input name="next_check_date" type="date" value="${esc(e.next_check_date || '')}">`)}
+      <label class="fld wide" style="display:flex;gap:10px;align-items:center"><input name="requires_teacher" type="checkbox" ${e.requires_teacher === true ? 'checked' : ''}><span style="margin:0">ต้องมีครูกำกับ (นักเรียนยืมเองไม่ได้)</span></label>
+      ${field('ลิงก์รูปภาพ', `<input name="image_url" value="${esc(e.image_url || '')}">`, 'wide')}
+      ${field('หมายเหตุ', `<input name="note" value="${esc(e.note || '')}">`, 'wide')}
+    </div>`,
+    onSubmit: async f => {
+      const x = f.elements;
+      const r = await api('saveEquipment', {
+        equipment_id: id || '', name: x.name.value, category: x.category.value, equip_type: x.equip_type.value,
+        total_qty: +x.total_qty.value, unit: x.unit.value, location: x.location.value,
+        condition_status: x.condition_status.value, hazard_level: x.hazard_level.value,
+        requires_teacher: x.requires_teacher.checked, expiry_date: x.expiry_date.value,
+        next_check_date: x.next_check_date.value, image_url: x.image_url.value, note: x.note.value
+      });
+      toast(isNew ? `เพิ่มอุปกรณ์แล้ว รหัส ${r.equipment_id}` : 'บันทึกการแก้ไขแล้ว');
+      loadEquipment();
+    }
+  });
+}
+
+function userDialog(id) {
+  const L = S.lists;
+  const isNew = !id;
+  const u = isNew ? {role:'student', status:'ใช้งาน'} : S.users.find(x => x.user_id === id);
+  openDlg({
+    title: isNew ? 'เพิ่มผู้ใช้' : 'แก้ไข ' + u.full_name,
+    body: `<div class="formgrid">
+      ${field('รหัสผู้ใช้', `<input name="user_id" value="${esc(u.user_id || '')}" ${isNew ? '' : 'readonly'} required>`)}
+      ${field('ชื่อ-นามสกุล', `<input name="full_name" value="${esc(u.full_name || '')}" required>`)}
+      ${field('บทบาท', `<select name="role">${opts(L.role, u.role)}</select>`)}
+      ${field('ชั้น/ห้อง (นักเรียน)', `<input name="class_room" value="${esc(u.class_room || '')}" placeholder="ม.3/2">`)}
+      ${field('อีเมลที่ใช้ล็อกอิน', `<input name="email" type="email" value="${esc(u.email || '')}" required>`, 'wide')}
+      ${field('สถานะ', `<select name="status">${opts(L.user_status, u.status)}</select>`)}
+    </div>`,
+    onSubmit: async f => {
+      const x = f.elements;
+      await api('saveUser', {user_id: x.user_id.value, full_name: x.full_name.value, role: x.role.value,
+        class_room: x.class_room.value, email: x.email.value, status: x.status.value});
+      toast('บันทึกผู้ใช้แล้ว');
+      loadUsers();
+    }
+  });
+}
+
+function printLabels() {
+  const ids = $$('#adminBody .pick input:checked').map(i => i.value);
+  if (!ids.length) return toast('เลือกอุปกรณ์อย่างน้อย 1 รายการก่อนพิมพ์', 'err');
+  if (typeof qrcode === 'undefined') return toast('โหลดตัวสร้าง QR ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต', 'err');
+  $('#printArea').innerHTML = ids.map(id => {
+    const e = S.equipment.find(x => x.equipment_id === id);
+    const qr = qrcode(0, 'M'); qr.addData(id); qr.make();
+    return `<figure class="sticker">${qr.createSvgTag({cellSize: 4, margin: 0, scalable: true})}
+      <figcaption><b>${esc(id)}</b><span>${esc(e ? e.name : '')}</span></figcaption></figure>`;
+  }).join('');
+  document.body.classList.add('printing');
+  window.print();
+}
+window.addEventListener('afterprint', () => document.body.classList.remove('printing'));
+
+/* ===================== กล่องโต้ตอบ & สแกน ===================== */
+function openDlg({title, body, submit = 'บันทึก', onSubmit}) {
+  const d = $('#dlg');
+  d.innerHTML = `<form class="dlg"><h2>${esc(title)}</h2>${body}
+    <p class="dlg-err" role="alert" hidden></p>
+    <div class="dlg-actions"><button type="button" class="btn ghost" data-close>ยกเลิก</button>
+    <button type="submit" class="btn">${esc(submit)}</button></div></form>`;
+  const f = $('form', d), err = $('.dlg-err', f), ok = $('button[type=submit]', f);
+  $('[data-close]', f).onclick = () => d.close();
+  f.onsubmit = async ev => {
+    ev.preventDefault();
+    err.hidden = true; ok.disabled = true;
+    try { await onSubmit(f); d.close(); }
+    catch (e) { err.textContent = e.message; err.hidden = false; }
+    finally { ok.disabled = false; }
+  };
+  d.showModal();
+  const first = $('input:not([readonly]):not([type=radio]),select,textarea', f);
+  if (first) first.focus();
+}
+
+let scanner = null;
+function scanQR(onText) {
+  if (typeof Html5Qrcode === 'undefined') return toast('โหลดตัวสแกน QR ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต', 'err');
+  const d = $('#dlgScan');
+  d.showModal();
+  scanner = new Html5Qrcode('scanBox');
+  scanner.start({facingMode: 'environment'}, {fps: 10, qrbox: {width: 240, height: 240}},
+    text => { closeScan(); onText(text.trim()); }, () => {})
+    .catch(() => { closeScan(); toast('เปิดกล้องไม่ได้ ตรวจสอบการอนุญาตใช้กล้องของเบราว์เซอร์', 'err'); });
+}
+function closeScan() {
+  const s = scanner; scanner = null;
+  if (s) s.stop().catch(() => {}).finally(() => { try { s.clear(); } catch (e) {} });
+  const d = $('#dlgScan'); if (d.open) d.close();
+}
+
+/* ===================== ผูกเหตุการณ์ ===================== */
+function bindStatic() {
+  $('#btnLogout').onclick = () => logout('');
+  $('#btnDashRefresh').onclick = loadDash;
+  $('#scanCancel').onclick = closeScan;
+  $('#dlgScan').addEventListener('close', closeScan);
+
+  $('#nav').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) showTab(b.dataset.tab); });
+
+  $('#equipQ').addEventListener('input', e => { S.q = e.target.value; renderEquip(); });
+  $('#catChips').addEventListener('click', e => {
+    const b = e.target.closest('[data-cat]'); if (!b) return;
+    S.cat = b.dataset.cat; renderChips(); renderEquip();
+  });
+  $('#equipGrid').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    if (b.dataset.act === 'selfBorrow') selfBorrowDialog(b.dataset.id);
+    if (b.dataset.act === 'toDesk') {
+      showTab('desk'); $('#bEquip').value = b.dataset.id; hintEquip(); $('#bUser').focus();
+    }
+  });
+
+  $('#bUser').addEventListener('input', hintUser);
+  $('#bEquip').addEventListener('input', hintEquip);
+  $$('[data-scan]').forEach(btn => btn.onclick = () => scanQR(text => {
+    const inp = $('#' + btn.dataset.scan); inp.value = text; inp.dispatchEvent(new Event('input'));
+  }));
+  $('#deskForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const btn = $('button[type=submit]', ev.target); btn.disabled = true;
+    try {
+      const r = await api('borrow', {
+        user_id: $('#bUser').value.trim(), equipment_id: $('#bEquip').value.trim(),
+        qty: +$('#bQty').value, days: +$('#bDays').value, purpose: $('#bPurpose').value
+      });
+      toast(r.consumable ? `เบิกแล้ว: ${r.user_name} เบิก ${r.equipment_name} ${r.qty}`
+        : `ยืมสำเร็จ: ${r.user_name} ยืม ${r.equipment_name} ${r.qty} คืนภายใน ${fmtDate(r.due_date)}`);
+      $('#bUser').value = ''; $('#bEquip').value = ''; $('#bQty').value = 1; $('#bPurpose').value = '';
+      hintUser(); hintEquip();
+      loadActive(); loadEquipment();
+    } catch (e) { toast(e.message, 'err'); }
+    finally { btn.disabled = false; }
+  });
+  $('#activeQ').addEventListener('input', renderActive);
+  $('#onlyOverdue').addEventListener('change', renderActive);
+  $('#activeList').addEventListener('click', e => {
+    const b = e.target.closest('[data-act=return]'); if (b) returnDialog(b.dataset.id);
+  });
+
+  $('#adminSeg').addEventListener('click', e => {
+    const b = e.target.closest('[data-seg]'); if (!b) return;
+    S.adminTab = b.dataset.seg; renderAdmin();
+  });
+  $('#adminBody').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const a = b.dataset.act;
+    if (a === 'addEquip') equipDialog();
+    if (a === 'editEquip') equipDialog(b.dataset.id);
+    if (a === 'addUser') userDialog();
+    if (a === 'editUser') userDialog(b.dataset.id);
+    if (a === 'pickAll') $$('#adminBody .pick input').forEach(i => i.checked = true);
+    if (a === 'printLabels') printLabels();
+  });
+}
+
+window.addEventListener('load', async () => {
+  bindStatic();
+  const tok = sessionStorage.getItem('tok');
+  if (tok && !API_URL.includes('PASTE')) {
+    S.token = tok;
+    if (await boot(true)) return;
+  } else {
+    showLogin('');
+  }
+});
+</script>
+</body>
+</html>
